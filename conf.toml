@@ -1,0 +1,6 @@
+[ports]
+app = 8080
+server = 8181
+
+[models]
+schema_file = "api_models.json"

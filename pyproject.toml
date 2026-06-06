@@ -1,0 +1,10 @@
+[project]
+name = "bookstring"
+version = "0.0.0"
+description = "Open-source reading progress tracker and social media website"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi[standard]>=0.136.3",
+    "typer>=0.26.7",
+]
