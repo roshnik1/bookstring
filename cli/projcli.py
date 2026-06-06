@@ -37,6 +37,10 @@ class ProjectManager(BaseModel):
     def models_schema_path(self) -> Path:
         return self.paths["app"] / self.config.models["schema_file"]
 
+    @property
+    def typedefs_path(self) -> Path:
+        return self.paths["app"] / "src" / "models.d.ts"
+
 
 manager = ProjectManager()
 project_app = typer.Typer()
@@ -47,3 +51,7 @@ def project_sync_models():
     Synchronize models from server to app
     """
     server_manager.write_model_schemas_to(manager.models_schema_path)
+    app_manager.build_types(
+        manager.models_schema_path.relative_to(manager.paths["app"]),
+        manager.typedefs_path.relative_to(manager.paths["app"]),
+    )
