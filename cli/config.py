@@ -25,7 +25,7 @@ class Config(BaseModel):
     """
 
     @classmethod
-    def load(cls, path: Path = Path("conf.toml")) -> "Config":
+    def load(cls, path: Path = Path("project/conf.toml")) -> "Config":
         with path.open("rb") as f:
             return Config(
                 **load(f)

@@ -8,3 +8,6 @@ dependencies = [
     "fastapi[standard]>=0.136.3",
     "typer>=0.26.7",
 ]
+
+[project.scripts]
+cli = "cli.main:__main__"

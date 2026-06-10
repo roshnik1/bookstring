@@ -5,6 +5,8 @@ informational but as the project develops we can add common development patterns
 standardization.
 """
 
+from tomllib import load
+import subprocess
 from pathlib import Path
 from pydantic import BaseModel, Field
 
@@ -14,7 +16,14 @@ from config import Config
 from appcli import manager as app_manager
 from servercli import manager as server_manager
 
-from typing import Dict
+from typing import Dict, List, Tuple
+
+
+class ProjectStatus(BaseModel):
+    version: str
+    branch: str
+    commit_hash: str
+    changes: List[Tuple[str, ...]]
 
 
 class ProjectManager(BaseModel):
@@ -41,6 +50,29 @@ class ProjectManager(BaseModel):
     def typedefs_path(self) -> Path:
         return self.paths["app"] / "src" / "models.d.ts"
 
+    @property
+    def pyproject(self) -> Dict:
+        with Path("pyproject.toml").open("rb") as f:
+            return load(f)
+
+    @property
+    def status(self) -> ProjectStatus:
+        return ProjectStatus(
+            version=self.pyproject["project"]["version"],
+            branch=subprocess.run([
+                "git", "branch", "--show-current"
+            ], capture_output=True).stdout.decode().strip(),
+            commit_hash=subprocess.run([
+                "git", "rev-parse", "--short", "HEAD"
+            ], capture_output=True).stdout.decode().strip(),
+            changes=[
+                line.strip().split(" ")
+                for line in subprocess.run([
+                "git", "status", "--porcelain"
+            ], capture_output=True).stdout.decode().strip().split("\n")
+            ]
+        )
+
 
 manager = ProjectManager()
 project_app = typer.Typer()
@@ -55,3 +87,19 @@ def project_sync_models():
         manager.models_schema_path.relative_to(manager.paths["app"]),
         manager.typedefs_path.relative_to(manager.paths["app"]),
     )
+
+
+@project_app.command("dump-config")
+def project_dump_config():
+    """
+    Dumps the current project config to console as JSON
+    """
+    print(manager.config.model_dump_json())
+
+
+@project_app.command("status")
+def project_status():
+    """
+    Dumps the current project status to console as JSON
+    """
+    print(manager.status.model_dump_json())
