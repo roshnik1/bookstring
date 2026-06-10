@@ -1,10 +1,23 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.tsx'
+import { StrictMode } from "react"
+import { createRoot } from "react-dom/client"
+import { BrowserRouter, Routes, Route } from "react-router"
 
-createRoot(document.getElementById('root')!).render(
+import "./index.css"
+import App from "./App.tsx"
+
+import { Devbar } from "./components/dev.tsx"
+
+
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<App />} />
+        <Route path="/check" element={<p>checking...</p>} />
+      </Routes>
+    </BrowserRouter>
+
+    {import.meta.env.DEV && <Devbar />}
   </StrictMode>,
 )
