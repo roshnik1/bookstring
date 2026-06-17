@@ -48,3 +48,10 @@ Some other useful references.
   + [Open Library](https://openlibrary.org/about) - Internet Archive library project
     + [Data dumps](https://openlibrary.org/developers/dumps) - Open library TSV files with lots of data about books
   + [Twelve factor app](https://12factor.net/) - Good reference of best practices in application development and deployment
+
+## Docsite
+
+  + Project and Overview
+  + Models
+  + Server (python)
+  + App (ts)

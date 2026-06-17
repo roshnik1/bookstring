@@ -52,11 +52,11 @@ class Board(BaseModel):
             )],
         )
     
-    def save(self, path: Path):
-        with path.open("w") as f:
+    def save(self, file: Path):
+        with file.open("w") as f:
             json.dump(
                 {
-                    "tasks": list(self.tasks.values()),
+                    "tasks": [task.model_dump_json() for task in self.tasks.values()],
                 }, f,
                 indent=2,
                 sort_keys=True,
