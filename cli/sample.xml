@@ -13,6 +13,8 @@ FastAPI Entry Point</doc>
         <item name="CORSMiddleware"/>
       </import>
     </imports>
+    <var name="server" type="FastAPI"/>
+    <func name="read_root"/>
   </file>
   <module name="models">
     <init/>
@@ -23,6 +25,8 @@ FastAPI Entry Point</doc>
           <item name="Field"/>
         </import>
       </imports>
+      <class name="ExampleModel"/>
+      <class name="NonModel"/>
     </file>
   </module>
   <file name="model_utils">
@@ -46,5 +50,7 @@ FastAPI Entry Point</doc>
         <item name="List"/>
       </import>
     </imports>
+    <func name="get_models"/>
+    <func name="write_schemas"/>
   </file>
 </module>
