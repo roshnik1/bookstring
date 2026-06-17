@@ -1,0 +1,50 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<module name="server">
+  <init/>
+  <doc># Server</doc>
+  <file name="main">
+    <doc># Server (main)
+FastAPI Entry Point</doc>
+    <imports>
+      <import module="fastapi">
+        <item name="FastAPI"/>
+      </import>
+      <import module="fastapi.middleware.cors">
+        <item name="CORSMiddleware"/>
+      </import>
+    </imports>
+  </file>
+  <module name="models">
+    <init/>
+    <file name="core">
+      <imports>
+        <import module="pydantic">
+          <item name="BaseModel"/>
+          <item name="Field"/>
+        </import>
+      </imports>
+    </file>
+  </module>
+  <file name="model_utils">
+    <imports>
+      <import module="json"/>
+      <import module="inspect"/>
+      <import module="pathlib">
+        <item name="Path"/>
+      </import>
+      <import module="pydantic">
+        <item name="BaseModel"/>
+      </import>
+      <import module="pydantic.json_schema">
+        <item name="models_json_schema"/>
+      </import>
+      <import module="server">
+        <item name="models"/>
+      </import>
+      <import module="typing">
+        <item name="Type"/>
+        <item name="List"/>
+      </import>
+    </imports>
+  </file>
+</module>
