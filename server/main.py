@@ -6,7 +6,7 @@ FastAPI Entry Point
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-server = FastAPI()
+server: FastAPI = FastAPI()
 
 server.add_middleware(
     CORSMiddleware,

@@ -2,16 +2,17 @@ import ast
 from ast import (
     AST, Module,
     Import, ImportFrom,
-    Assign, Expr,
+    Assign, AnnAssign, Expr,
     FunctionDef, ClassDef,
+    Name,
 )
 from pathlib import Path
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from lxml import etree
 from lxml.etree import ElementTree, Element, _ElementTree, _Element, SubElement
 
-from mistletoe.block_token import Document
+from mistletoe import Document
 
 from typing import (
     List, Tuple, Optional,
@@ -150,11 +151,35 @@ class PythonModule(BaseModel):
         ]
 
     @property
-    def _topvars(self) -> List[Assign]:
+    def topvars(self) -> List["PythonScopedVariable"]:
         return [
-            stmt for stmt in self.module.body
-            if isinstance(stmt, Assign)
+            PythonScopedVariable(
+                node=stmt,
+                scope=self,
+            ) for stmt in self.module.body
+            if isinstance(stmt, AnnAssign)
         ]
+
+    @property
+    def functions(self) -> List["PythonFunction"]:
+        return [
+            PythonFunction(
+                module=self,
+                node=node
+            ) for node in self.module.body
+            if isinstance(node, FunctionDef)
+        ]
+
+    @property
+    def classes(self) -> List["PythonClass"]:
+        return [
+            PythonClass(
+                module=self,
+                node=node
+            ) for node in self.module.body
+            if isinstance(node, ClassDef)
+        ]
+
 
     @property
     def file_element(self) -> _Element:
@@ -171,14 +196,14 @@ class PythonModule(BaseModel):
                 ielm.append(pimport.import_element)
             root.append(ielm)
 
-        topvars = {}
+        for fvar in self.topvars:
+            root.append(fvar.variable_element)
 
-        for statement in self.module.body:
-            match statement:
-                case Import():
-                    pass
-                case Assign():
-                    pass
+        for fnode in self.functions:
+            root.append(fnode.function_element)
+
+        for cnode in self.classes:
+            root.append(cnode.class_element)
         
         return root
 
@@ -226,6 +251,12 @@ class PythonFunction(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
+    @property
+    def function_element(self) -> _Element:
+        elem = Element("func")
+        elem.attrib["name"] = self.node.name
+        return elem
+
 
 class PythonClass(BaseModel):
     module: PythonModule
@@ -233,8 +264,38 @@ class PythonClass(BaseModel):
 
     model_config = {"arbitrary_types_allowed": True}
 
+    @property
+    def class_element(self) -> _Element:
+        elem = Element("class")
+        elem.attrib["name"] = self.node.name
+        return elem
+
+
+class PythonScopedVariable(BaseModel):
+    node: Assign | AnnAssign
+    uses: List[Expr] = Field(default_factory=list)
+    scope: Optional[PythonClass | PythonFunction | PythonModule] = None
+
+    model_config = {"arbitrary_types_allowed": True}
+
+    @property
+    def variable_element(self) -> _Element:
+        elem = Element("var")
+        target = self.node.target
+        match target:
+            case Name():
+                elem.attrib["name"] = target.id
+            case _:
+                raise Exception()
+        if isinstance(self.node, AnnAssign):
+            elem.attrib["type"] = self.node.annotation.id
+        return elem
+
 
 if __name__ == "__main__":
     root = PythonDirectory.parse_directory(Path("../server"))
+
     with Path("sample.xml").open("w") as f:
         f.write(root.xml)
+    
+    #main = root.
