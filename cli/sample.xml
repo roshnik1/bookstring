@@ -1,10 +1,14 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <module name="server">
   <init/>
-  <doc># Server</doc>
+  <doc>
+    <heading level="1">Server</heading>
+  </doc>
   <file name="main">
-    <doc># Server (main)
-FastAPI Entry Point</doc>
+    <doc>
+      <heading level="1">Server (main)</heading>
+      <p>FastAPI Entry Point</p>
+    </doc>
     <imports>
       <import module="fastapi">
         <item name="FastAPI"/>
@@ -13,11 +17,20 @@ FastAPI Entry Point</doc>
         <item name="CORSMiddleware"/>
       </import>
     </imports>
-    <var name="server" type="FastAPI"/>
-    <func name="read_root"/>
+    <var name="server" type="FastAPI">
+      <doc>
+        <p>FastAPI application instance</p>
+      </doc>
+    </var>
+    <function name="read_root">
+      <sig isvoid="1" isstart="1"/>
+    </function>
   </file>
   <module name="models">
     <init/>
+    <doc>
+      <p>TODO</p>
+    </doc>
     <file name="core">
       <imports>
         <import module="pydantic">
@@ -25,8 +38,43 @@ FastAPI Entry Point</doc>
           <item name="Field"/>
         </import>
       </imports>
-      <class name="ExampleModel"/>
-      <class name="NonModel"/>
+      <class name="ExampleModel">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <doc>
+          <p>Just an example of a model</p>
+        </doc>
+        <var name="name" type="str">
+          <doc>
+            <p>This is a name!</p>
+          </doc>
+        </var>
+        <var name="value" type="float">
+          <doc>
+            <p>This is a value!</p>
+          </doc>
+        </var>
+        <method name="checkmethod">
+          <sig>
+            <returns>
+              <type>float</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="num">
+                <type>int</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="NonModel">
+        <doc>
+          <p>This one isn't a model</p>
+        </doc>
+        <var name="thing" type="str"/>
+      </class>
     </file>
   </module>
   <file name="model_utils">
@@ -50,7 +98,30 @@ FastAPI Entry Point</doc>
         <item name="List"/>
       </import>
     </imports>
-    <func name="get_models"/>
-    <func name="write_schemas"/>
+    <function name="get_models">
+      <sig isstart="1">
+        <returns>
+          <type iter="list" istype="1">BaseModel</type>
+        </returns>
+      </sig>
+      <doc>
+        <p>Get all the models</p>
+      </doc>
+    </function>
+    <function name="write_schemas">
+      <sig isvoid="1">
+        <arguments>
+          <arg name="models">
+            <type iter="list" istype="1">BaseModel</type>
+          </arg>
+          <arg name="path">
+            <type>Path</type>
+          </arg>
+        </arguments>
+      </sig>
+      <doc>
+        <p>Write out the schemas</p>
+      </doc>
+    </function>
   </file>
 </module>

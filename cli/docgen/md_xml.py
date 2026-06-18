@@ -2,16 +2,17 @@
 XML renderer for mistletoe.
 """
 
-from lxml import Element, _Element
+from lxml.etree import Element, _Element, SubElement, CDATA
 
 from itertools import chain
 from urllib.parse import quote
 from mistletoe import block_token
-from mistletoe import span_token
+from mistletoe import token, span_token
 from mistletoe.block_token import HtmlBlock
 from mistletoe.span_token import HtmlSpan
 from mistletoe.base_renderer import BaseRenderer
-from mistletoe.base_renderer import URI_SAFE_CHARACTERS
+
+from typing import List
 
 
 class XMLRenderer(BaseRenderer):
@@ -32,71 +33,83 @@ class XMLRenderer(BaseRenderer):
     def __exit__(self, *args):
         super().__exit__(*args)
 
-    def render_to_plain(self, token) -> str:
-        if token.children is not None:
-            inner = [self.render_to_plain(child) for child in token.children]
-            return ''.join(inner)
-        return html.escape(token.content)
+    def render(self, token: token.Token) -> _Element:
+        return super().render(token)
 
-    def render_strong(self, token: span_token.Strong) -> str:
-        template = '<strong>{}</strong>'
-        return template.format(self.render_inner(token))
+    def render_children(self, element: _Element, children: List[token.Token]) -> _Element:
+        if len(children) == 1 and isinstance(children[0], span_token.RawText):
+            element.text = children[0].content
+        else:
+            for child in children:
+                element.append(self.render(child))
+        return element
 
-    def render_emphasis(self, token: span_token.Emphasis) -> str:
-        template = '<em>{}</em>'
-        return template.format(self.render_inner(token))
+    def render_to_plain(self, token: token.Token) -> _Element:
+        elem = Element(token.__class__.__name__.lower())
+        for child in token.children:
+            elem.append(self.render_to_plain(child))
+        if hasattr(token, "content"):
+            elem.text = token.content #TODO handle escaping
+        return elem
 
-    def render_inline_code(self, token: span_token.InlineCode) -> str:
-        template = '<code>{}</code>'
-        inner = self.escape_html_text(token.children[0].content)
-        return template.format(inner)
+    def render_strong(self, token: span_token.Strong) -> _Element:
+        elem = Element("strong")
+        return self.render_children(elem, token.children)
 
-    def render_strikethrough(self, token: span_token.Strikethrough) -> str:
-        template = '<del>{}</del>'
-        return template.format(self.render_inner(token))
+    def render_emphasis(self, token: span_token.Emphasis) -> _Element:
+        elem = Element("em")
+        return self.render_children(elem, token.children)
 
-    def render_image(self, token: span_token.Image) -> str:
-        template = '<img src="{}" alt="{}"{} />'
-        src = self.escape_url(token.src)
+    def render_inline_code(self, token: span_token.InlineCode) -> _Element:
+        elem = Element("code")
+        elem.text = CDATA(token.children[0].content) #type: ignore
+        return self.render_children(elem, token.children)
+
+    def render_strikethrough(self, token: span_token.Strikethrough) -> _Element:
+        elem = Element("del")
+        return self.render_children(elem, token.children)
+
+    def render_image(self, token: span_token.Image) -> _Element:
+        elem = Element("img")
+        elem.attrib["url"] = self.escape_url(token.src)
         if token.title:
-            title = ' title="{}"'.format(html.escape(token.title))
-        else:
-            title = ''
-        return template.format(src, self.render_to_plain(token), title)
+            elem.attrib["title"] = token.title
+        if token.content:
+            elem.attrib["alt"] = token.content
+        if token.label:
+            elem.attrib["label"] = token.label
+        return elem
 
-    def render_link(self, token: span_token.Link) -> str:
-        template = '<a href="{target}"{title}>{inner}</a>'
-        target = self.escape_url(token.target)
+    def render_link(self, token: span_token.Link) -> _Element:
+        elem = Element("link")
+        elem.attrib["target"] = self.escape_url(token.target)
         if token.title:
-            title = ' title="{}"'.format(html.escape(token.title))
-        else:
-            title = ''
-        inner = self.render_inner(token)
-        return template.format(target=target, title=title, inner=inner)
+            elem.attrib["title"] = token.title
+        if token.label:
+            elem.attrib["label"] = token.label
+        return self.render_children(elem, token.children)
 
-    def render_auto_link(self, token: span_token.AutoLink) -> str:
-        template = '<a href="{target}">{inner}</a>'
-        if token.mailto:
-            target = 'mailto:{}'.format(token.target)
-        else:
-            target = self.escape_url(token.target)
-        inner = self.render_inner(token)
-        return template.format(target=target, inner=inner)
+    def render_auto_link(self, token: span_token.AutoLink) -> _Element:
+        elem = Element("link")
+        elem.attrib["target"] = self.escape_url(token.target)
+        return self.render_children(elem, token.children)
 
-    def render_escape_sequence(self, token: span_token.EscapeSequence) -> str:
-        return self.render_inner(token)
+    def render_escape_sequence(self, token: span_token.EscapeSequence) -> _Element:
+        return self.render(token.children[0])
 
-    def render_raw_text(self, token: span_token.RawText) -> str:
-        return self.escape_html_text(token.content)
+    def render_raw_text(self, token: span_token.RawText) -> _Element:
+        elem = Element("span")
+        elem.text = token.content
+        return elem
+
+    def render_heading(self, token: block_token.Heading) -> _Element:
+        elem = Element("heading")
+        elem.attrib["level"] = str(token.level)
+        return self.render_children(elem, token.children)
 
     @staticmethod
     def render_html_span(token: span_token.HtmlSpan) -> str:
-        return token.content
-
-    def render_heading(self, token: block_token.Heading) -> str:
-        template = '<h{level}>{inner}</h{level}>'
-        inner = self.render_inner(token)
-        return template.format(level=token.level, inner=inner)
+        raise NotImplementedError
 
     def render_quote(self, token: block_token.Quote) -> str:
         elements = ['<blockquote>']
@@ -106,10 +119,12 @@ class XMLRenderer(BaseRenderer):
         elements.append('</blockquote>')
         return '\n'.join(elements)
 
-    def render_paragraph(self, token: block_token.Paragraph) -> str:
+    def render_paragraph(self, token: block_token.Paragraph) -> _Element:
         if self._suppress_ptag_stack[-1]:
-            return '{}'.format(self.render_inner(token))
-        return '<p>{}</p>'.format(self.render_inner(token))
+            #return '{}'.format(self.render_inner(token))
+            raise NotImplementedError
+        elem = Element("p")
+        return self.render_children(elem, token.children)
 
     def render_block_code(self, token: block_token.BlockCode) -> str:
         template = '<pre><code{attr}>{inner}</code></pre>'
@@ -193,10 +208,10 @@ class XMLRenderer(BaseRenderer):
     def render_html_block(token: block_token.HtmlBlock) -> str:
         return token.content
 
-    def render_document(self, token: block_token.Document) -> str:
+    def render_document(self, token: block_token.Document) -> _Element:
         self.footnotes.update(token.footnotes)
-        inner = '\n'.join([self.render(child) for child in token.children])
-        return '{}\n'.format(inner) if inner else ''
+        doc = Element("doc")
+        return self.render_children(doc, token.children)
 
     def escape_html_text(self, s: str) -> str:
         """
@@ -220,10 +235,5 @@ class XMLRenderer(BaseRenderer):
         """
         Escape urls to prevent code injection craziness. (Hopefully.)
         """
-        return html.escape(quote(raw, safe=URI_SAFE_CHARACTERS))
-
-
-HTMLRenderer = HtmlRenderer
-"""
-Deprecated name of the `HtmlRenderer` class.
-"""
+        #return html.escape(quote(raw, safe=URI_SAFE_CHARACTERS))
+        return raw
