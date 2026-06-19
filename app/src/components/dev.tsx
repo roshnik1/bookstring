@@ -39,7 +39,6 @@ export function Devbar() {
     /** API server status checking */
     setInterval(
       () => {
-        console.log("checking api")
         fetch(SERVER_URL, { signal: AbortSignal.timeout(1000) })
           .then((_) => {
             setAPIStatus(true)

@@ -16,7 +16,7 @@ from lxml import etree
 
 from mistletoe import Document
 
-from md_xml import XMLRenderer
+from docgen.md_xml import XMLRenderer
 
 from typing import (
     List, Tuple, Optional,
@@ -45,7 +45,7 @@ class PythonDirectory(BaseModel):
     def parse_directory(cls, path: Path) -> "PythonDirectory":
         tree: List["PythonDirectory | PythonModule | MarkdownDocument"] = []
         for child_path in path.iterdir():
-            if child_path.name in { "__pycache__", }:
+            if child_path.name in { "__pycache__", ".venv" }:
                 continue
             elif child_path.is_dir():
                 tree.append(cls.parse_directory(child_path))

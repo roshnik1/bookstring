@@ -10,6 +10,9 @@ from typing import Type, List
 
 
 def get_models() -> List[Type[BaseModel]]:
+    """
+    Get all the models
+    """
     return [
         member[1] for member in inspect.getmembers(models, inspect.isclass)
         if member[1].__module__.startswith("server.models") and issubclass(member[1], BaseModel)
@@ -17,6 +20,9 @@ def get_models() -> List[Type[BaseModel]]:
 
 
 def write_schemas(models: List[Type[BaseModel]], path: Path):
+    """
+    Write out the schemas
+    """
     _, schemas = models_json_schema(
         [(model, "validation") for model in models],
         ref_template="#/components/schemas/{model}"

@@ -13,3 +13,8 @@ dependencies = [
 
 [project.scripts]
 cli = "cli.main:__main__"
+
+[dependency-groups]
+dev = [
+    "lxml-stubs>=0.5.1",
+]

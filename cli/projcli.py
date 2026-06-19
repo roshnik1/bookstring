@@ -12,9 +12,10 @@ from pydantic import BaseModel, Field
 
 import typer
 
-from config import Config
-from appcli import manager as app_manager
-from servercli import manager as server_manager
+from config import Config #type: ignore
+from appcli import manager as app_manager #type: ignore
+from servercli import manager as server_manager #type: ignore
+from docgen import PythonDirectory #type: ignore
 
 from typing import Dict, List, Tuple
 
@@ -66,7 +67,7 @@ class ProjectManager(BaseModel):
                 "git", "rev-parse", "--short", "HEAD"
             ], capture_output=True).stdout.decode().strip(),
             changes=[
-                line.strip().split(" ")
+                tuple(line.strip().split(" "))
                 for line in subprocess.run([
                 "git", "status", "--porcelain"
             ], capture_output=True).stdout.decode().strip().split("\n")
@@ -103,3 +104,16 @@ def project_status():
     Dumps the current project status to console as JSON
     """
     print(manager.status.model_dump_json())
+
+
+@project_app.command("pydocs")
+def project_docs(target: Path, output: Path):
+    """
+    Generate XML docs for the target python project to the output path
+    """
+    if not target.is_dir():
+        raise FileNotFoundError(f"Cannot find target directory '{target}'")
+
+    pyproj = PythonDirectory.parse_directory(target)
+    with output.open("w") as f:
+        f.write(pyproj.xml)
