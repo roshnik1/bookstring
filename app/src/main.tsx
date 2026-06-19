@@ -7,6 +7,7 @@ import App from "./App.tsx"
 import ServerDevdocs from "./site/development/Server.tsx"
 
 import { Devbar } from "./components/dev.tsx"
+import ThemeDisplay from "./site/development/Theme.tsx"
 
 
 createRoot(document.getElementById("root")!).render(
@@ -18,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
         <Route path="/check" element={<p>checking...</p>} />
 
         <Route path="/dev/server" element={<ServerDevdocs />} />
+        <Route path="/dev/theme" element={<ThemeDisplay />} />
       </Routes>
     </BrowserRouter>
 
