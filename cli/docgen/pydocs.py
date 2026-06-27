@@ -4,7 +4,8 @@ from ast import (
     Import, ImportFrom,
     Assign, AnnAssign, Expr,
     FunctionDef, AsyncFunctionDef, ClassDef,
-    Constant, Name, Subscript,
+    BinOp, Tuple as ASTTuple,
+    Constant, Name, Attribute, Subscript,
     stmt, expr,
     unparse, walk,
 )
@@ -14,9 +15,8 @@ from pydantic import BaseModel, Field
 from lxml.etree import ElementTree, Element, _ElementTree, _Element, SubElement
 from lxml import etree
 
-from mistletoe import Document
-
-from docgen.md_xml import XMLRenderer
+from docgen.core import DocgenDirectory
+from docgen.md_xml import MarkdownDocument
 
 from typing import (
     List, Tuple, Optional,
@@ -24,42 +24,23 @@ from typing import (
 )
 
 
-class MarkdownDocument(BaseModel):
-    content: str
-    name: Optional[str] = None
+class PythonDirectory(DocgenDirectory["PythonModule | MarkdownDocument"]):
+    IGNORE_PATTERNS = { "__pycache__", ".venv" } 
 
-    @property
-    def document(self) -> Document:
-        return Document(self.content)
-
-    @property
-    def document_element(self) -> _Element:
-        return XMLRenderer().render(self.document)
-
-
-class PythonDirectory(BaseModel):
-    path: Path
     tree: List["PythonDirectory | PythonModule | MarkdownDocument"]
 
     @classmethod
-    def parse_directory(cls, path: Path) -> "PythonDirectory":
-        tree: List["PythonDirectory | PythonModule | MarkdownDocument"] = []
-        for child_path in path.iterdir():
-            if child_path.name in { "__pycache__", ".venv" }:
-                continue
-            elif child_path.is_dir():
-                tree.append(cls.parse_directory(child_path))
-            elif child_path.suffix == ".py":
-                tree.append(PythonModule.parse_pyfile(child_path))
-            elif child_path.suffix == ".md":
-                tree.append(MarkdownDocument(
-                    name=child_path.stem,
-                    content=child_path.read_text()
-                ))
-        return cls(
-            path=path,
-            tree=tree,
-        )
+    def parse_path(cls, path: Path) -> Optional["PythonModule | MarkdownDocument"]:
+        match path.suffix:
+            case ".py":
+                return PythonModule.parse_pyfile(path)
+            case ".md":
+                return MarkdownDocument(
+                name=path.stem,
+                content=path.read_text()
+            )
+            case _:
+                pass
 
     @property
     def docstr(self) -> MarkdownDocument:
@@ -97,19 +78,6 @@ class PythonDirectory(BaseModel):
 
         return root
 
-    @property
-    def doctree(self) -> _ElementTree:
-        return ElementTree(self.directory_element)
-
-    @property
-    def xml(self) -> str:
-        return etree.tostring(
-            self.doctree,
-            pretty_print=True,
-            xml_declaration=True,
-            encoding="UTF-8",
-        ).decode(encoding="utf-8")
-        
 
 class PythonModule(BaseModel):
     path: Path
@@ -279,8 +247,26 @@ class PythonTypeAnnotation(BaseModel):
             return self._resolve_subscript_stack(sub or elem, subsc.slice)
         elif isinstance(subsc.slice, Name):
             elem.text = subsc.slice.id
+        elif isinstance(subsc.slice, Attribute):
+            elem.text = unparse(subsc.slice)
+        elif isinstance(subsc.slice, Constant):
+            elem.text = subsc.slice.value
+            elem.attrib["const"] = "1"
+        elif isinstance(subsc.slice, ASTTuple):
+            for item in subsc.slice.elts:
+                elem.append(PythonTypeAnnotation(node=item).type_element)
+        elif isinstance(subsc.slice, BinOp):
+            # In this context I think the op can only ever be '|'
+            union = SubElement(elem, "union")
+            for item in [subsc.slice.left, subsc.slice.right]:
+                itelm = PythonTypeAnnotation(node=item).type_element
+                if itelm.tag == "union":
+                    union.extend(list(itelm))
+                else:
+                    union.append(itelm)
         else:
-            raise NotImplementedError(f"Need support for type '{type(value).__name__}'")
+            import pdb; pdb.set_trace()
+            raise NotImplementedError(f"Need support for type '{type(subsc.slice).__name__}'")
 
         return elem
 
@@ -519,7 +505,8 @@ class PythonScopedVariable(BaseModel):
         elem.attrib["name"] = self.name
 
         if isinstance(self.node, AnnAssign):
-            elem.attrib["type"] = self.node.annotation.id #type: ignore
+            ann = PythonTypeAnnotation(node=self.node.annotation)
+            elem.append(ann.type_element)
         
         if self.docstr:
             elem.append(self.docstr.document_element)

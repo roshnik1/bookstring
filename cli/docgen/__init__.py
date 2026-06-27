@@ -1,1 +1,2 @@
 from docgen.pydocs import PythonDirectory
+from docgen.project_docs import DocumentationBuilder

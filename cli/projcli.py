@@ -15,7 +15,7 @@ import typer
 from config import Config #type: ignore
 from appcli import manager as app_manager #type: ignore
 from servercli import manager as server_manager #type: ignore
-from docgen import PythonDirectory #type: ignore
+from docgen import PythonDirectory, DocumentationBuilder #type: ignore
 
 from typing import Dict, List, Tuple
 
@@ -117,3 +117,16 @@ def project_docs(target: Path, output: Path):
     pyproj = PythonDirectory.parse_directory(target)
     with output.open("w") as f:
         f.write(pyproj.xml)
+
+
+@project_app.command("docgen")
+def project_docgen():
+    """
+    Generate XML docs for the full project.
+    """
+    print("Building project docs")
+    builder = DocumentationBuilder(
+        root=Path("."),
+        conf=manager.config.docs,
+    )
+    builder.build()

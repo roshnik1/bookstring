@@ -2,7 +2,46 @@ from pathlib import Path
 from tomllib import load
 from pydantic import BaseModel, Field
 
-from typing import Dict, Literal
+from typing import Dict, List, Literal, Optional
+
+
+class DocsConf(BaseModel):
+    """
+    ### Documentation Config
+    Configuration for documentation generation.
+    """
+
+    class KnownDirectory(BaseModel):
+        """
+        ### Directory to Document
+        Directories marked here are 'known' to the documentation generator and will be used
+        as sources for the docgen process.
+        """
+
+        dir: Path
+        """ The specific directory (relative to project root) to target for docgen """
+
+        lang: Optional[Literal["ts", "py"]] = None
+        """
+        The language the directory code is any ([t]ype[s]cript or [py]thon, leave blank
+        for directories without code that may have markdown or data files).
+        """
+
+        category: Literal["website", "meta"]
+        """
+        The basic role/category of the directory; 'website' refers to those involved in
+        the Bookstring website itself and 'meta' refers to those involved in managing
+        this project.
+        """
+
+    output_dir: Path
+    """ Where to write out the generated XML docs """
+
+    root_name: str
+    """ Name of the 'root' document """
+
+    known: List[KnownDirectory]
+    """ Known directories to target for document generation """
 
 
 class Config(BaseModel):
@@ -22,6 +61,11 @@ class Config(BaseModel):
     models: Dict[Literal["schema_file"], str] = Field(default_factory=dict)
     """
     For synchronizing models between the server and app
+    """
+
+    docs: DocsConf
+    """
+    For controlling how documentation generation works
     """
 
     @classmethod

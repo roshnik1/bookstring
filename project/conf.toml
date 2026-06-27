@@ -5,6 +5,30 @@ server = 8181
 [models]
 schema_file = "api_models.json"
 
+[docs]
+output_dir = "docs"
+root_name = "root"
+
+[[docs.known]]
+dir = "app"
+lang = "ts"
+category = "website"
+
+[[docs.known]]
+dir = "cli"
+lang = "py"
+category = "meta"
+
+[[docs.known]]
+dir = "project"
+category = "meta"
+
+[[docs.known]]
+dir = "server"
+lang = "py"
+category = "website"
+
+
 [[board.stages]]
 name = "idea"
 description = """

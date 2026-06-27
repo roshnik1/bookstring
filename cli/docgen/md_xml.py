@@ -2,17 +2,22 @@
 XML renderer for mistletoe.
 """
 
+from pathlib import Path
+from pydantic import BaseModel
+
 from lxml.etree import Element, _Element, SubElement, CDATA
 
 from itertools import chain
 from urllib.parse import quote
-from mistletoe import block_token
+from mistletoe import Document, block_token
 from mistletoe import token, span_token
 from mistletoe.block_token import HtmlBlock
 from mistletoe.span_token import HtmlSpan
 from mistletoe.base_renderer import BaseRenderer
 
-from typing import List
+from docgen.core import DocgenDirectory
+
+from typing import List, Optional
 
 
 class XMLRenderer(BaseRenderer):
@@ -120,47 +125,45 @@ class XMLRenderer(BaseRenderer):
         return '\n'.join(elements)
 
     def render_paragraph(self, token: block_token.Paragraph) -> _Element:
-        if self._suppress_ptag_stack[-1]:
-            #return '{}'.format(self.render_inner(token))
-            raise NotImplementedError
         elem = Element("p")
         return self.render_children(elem, token.children)
 
-    def render_block_code(self, token: block_token.BlockCode) -> str:
-        template = '<pre><code{attr}>{inner}</code></pre>'
+    def render_block_code(self, token: block_token.BlockCode) -> _Element:
+        elem = Element("code")
+        elem.text = CDATA(token.content)
+
         if token.language:
-            attr = ' class="{}"'.format('language-{}'.format(html.escape(token.language)))
-        else:
-            attr = ''
-        inner = self.escape_html_text(token.content)
-        return template.format(attr=attr, inner=inner)
+            elem.attrib["lang"] = token.language
+        return elem
 
-    def render_list(self, token: block_token.List) -> str:
-        template = '<{tag}{attr}>\n{inner}\n</{tag}>'
-        if token.start is not None:
-            tag = 'ol'
-            attr = ' start="{}"'.format(token.start) if token.start != 1 else ''
-        else:
-            tag = 'ul'
-            attr = ''
+    def render_list(self, token: block_token.List) -> _Element:
+        elem = Element("list")
+
         self._suppress_ptag_stack.append(not token.loose)
-        inner = '\n'.join([self.render(child) for child in token.children])
+        for child in token.children:
+            elem.append(self.render(child))
         self._suppress_ptag_stack.pop()
-        return template.format(tag=tag, attr=attr, inner=inner)
 
-    def render_list_item(self, token: block_token.ListItem) -> str:
-        if len(token.children) == 0:
-            return '<li></li>'
-        inner = '\n'.join([self.render(child) for child in token.children])
-        inner_template = '\n{}\n'
-        if self._suppress_ptag_stack[-1]:
-            if token.children[0].__class__.__name__ == 'Paragraph':
-                inner_template = inner_template[1:]
-            if token.children[-1].__class__.__name__ == 'Paragraph':
-                inner_template = inner_template[:-1]
-        return '<li>{}</li>'.format(inner_template.format(inner))
+        return elem
+
+    def render_list_item(self, token: block_token.ListItem) -> _Element:
+        elem = Element("item")
+        for child in token.children:
+            chelm = self.render(child)
+            if chelm.tag == "p":
+                if chelm.text:
+                    if elem.text:
+                        elem.text += chelm.text
+                    else:
+                        elem.text = chelm.text
+                if list(chelm):
+                    elem.extend(list(chelm))
+            else:
+                elem.append(chelm)
+        return elem
 
     def render_table(self, token: block_token.Table) -> str:
+        raise NotImplemented
         # This is actually gross and I wonder if there's a better way to do it.
         #
         # The primary difficulty seems to be passing down alignment options to
@@ -178,12 +181,14 @@ class XMLRenderer(BaseRenderer):
         return template.format(inner=head_rendered + body_rendered)
 
     def render_table_row(self, token: block_token.TableRow, is_header=False) -> str:
+        raise NotImplemented
         template = '<tr>\n{inner}</tr>\n'
         inner = ''.join([self.render_table_cell(child, is_header)
                          for child in token.children])
         return template.format(inner=inner)
 
     def render_table_cell(self, token: block_token.TableCell, in_header=False) -> str:
+        raise NotImplemented
         template = '<{tag}{attr}>{inner}</{tag}>\n'
         tag = 'th' if in_header else 'td'
         if token.align is None:
@@ -197,15 +202,16 @@ class XMLRenderer(BaseRenderer):
         return template.format(tag=tag, attr=attr, inner=inner)
 
     @staticmethod
-    def render_thematic_break(token: block_token.ThematicBreak) -> str:
-        return '<hr />'
+    def render_thematic_break(token: block_token.ThematicBreak) -> _Element:
+        return Element("hr")
 
     @staticmethod
     def render_line_break(token: span_token.LineBreak) -> str:
-        return '\n' if token.soft else '<br />\n'
+        return Element("br")
 
     @staticmethod
     def render_html_block(token: block_token.HtmlBlock) -> str:
+        raise NotImplemented
         return token.content
 
     def render_document(self, token: block_token.Document) -> _Element:
@@ -221,6 +227,7 @@ class XMLRenderer(BaseRenderer):
         Intended for escaping text content. To escape content of an attribute,
         simply call `html.escape()`.
         """
+        raise NotImplementedError
         s = s.replace("&", "&amp;")  # Must be done first!
         s = s.replace("<", "&lt;")
         s = s.replace(">", "&gt;")
@@ -237,3 +244,48 @@ class XMLRenderer(BaseRenderer):
         """
         #return html.escape(quote(raw, safe=URI_SAFE_CHARACTERS))
         return raw
+
+
+class MarkdownDocument(BaseModel):
+    content: str
+    name: Optional[str] = None
+
+    @property
+    def document(self) -> Document:
+        return Document(self.content)
+
+    @property
+    def document_element(self) -> _Element:
+        return XMLRenderer().render(self.document)
+
+
+class MarkdownDirectory(DocgenDirectory[MarkdownDocument]):
+    tree: List["MarkdownDocument | MarkdownDirectory"]
+
+    @classmethod
+    def parse_path(cls, path: Path) -> Optional[MarkdownDocument]:
+        match path.suffix:
+            case ".md":
+                return MarkdownDocument(
+                name=path.stem,
+                content=path.read_text()
+            )
+            case _:
+                pass
+
+    @property
+    def directory_element(self) -> _Element:
+        root = Element("docsite")
+        root.attrib["name"] = self.path.name
+
+        for item in self.tree:
+            match item:
+                case MarkdownDirectory():
+                    root.append(item.directory_element)
+                case MarkdownDocument():
+                    if item.name == "here":
+                        root.insert(0, item.document_element)
+                    else:
+                        root.append(item.document_element)
+
+        return root
