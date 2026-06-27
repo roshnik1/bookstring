@@ -2,6 +2,8 @@
 XML renderer for mistletoe.
 """
 
+import yaml
+from re import compile, Pattern, Match, MULTILINE
 from pathlib import Path
 from pydantic import BaseModel
 
@@ -17,7 +19,47 @@ from mistletoe.base_renderer import BaseRenderer
 
 from docgen.core import DocgenDirectory
 
-from typing import List, Optional
+from typing import List, Optional, ClassVar, Dict
+
+
+class DirectiveToken(span_token.SpanToken):
+    pattern: ClassVar[Pattern] = compile(
+        r"@(?P<drt>[a-z]+)( (?P<name>[a-z\d_]+))? *(- (?P<msg>.+))?"
+    )
+    """
+    Pattern to match at-directives, ex:
+
+    ```
+    @task fix_451 - Fix a thing
+    ```
+
+    This pattern generates three named groups on a match:
+      + **drt**: Directive (required), lowercase ascii letters
+      + **name**: Use name (optional), lowercase ascii, digits, and underscores
+      + **msg**: Message content (optional), arbitrary string
+    """
+
+    directive: str
+    """ Directive name (lowercase letters only)"""
+
+    target: Optional[str] = None
+    """ Target name (lowercase letters, digits, and underscores)"""
+
+    message: Optional[str] = None
+    """ Directive message """
+
+    def __init__(self, regex: Match):
+        self.directive = regex.group("drt")
+        self.target = regex.group("name")
+        self.message = regex.group("msg")
+
+
+class GlossLink(span_token.SpanToken):
+    pattern: ClassVar[Pattern] = compile(r"\[\[(?P<target>[\w\d \.\-_]+)\]\]")
+    target: str
+
+    def __init__(self, match_obj):
+        self.target = match_obj.group("target")
 
 
 class XMLRenderer(BaseRenderer):
@@ -27,19 +69,38 @@ class XMLRenderer(BaseRenderer):
     See mistletoe.base_renderer module for more info.
     See mistletoe.html_renderer module for template / baseline.
     """
-    def __init__(
-        self,
-        *extras,
-        **kwargs
-    ):
+
+    def __init__(self):
         self._suppress_ptag_stack = [False]
-        super().__init__(*extras, **kwargs)
+        super().__init__(
+            DirectiveToken,
+            GlossLink,
+        )
 
     def __exit__(self, *args):
         super().__exit__(*args)
 
     def render(self, token: token.Token) -> _Element:
         return super().render(token)
+    
+    def render_directive_token(self, token: DirectiveToken) -> _Element:
+        match token.directive:
+            case "todo":
+                elem = Element("task")
+                elem.attrib["status"] = "unsorted"
+            case "task":
+                elem = Element("task")
+                elem.attrib["status"] = "sorted"
+            case _:
+                elem = Element("directive")
+                elem.attrib["key"] = token.directive
+            
+        if token.target:
+            elem.attrib["name"] = token.target
+        
+        if token.message:
+            elem.text = token.message
+        return elem
 
     def render_children(self, element: _Element, children: List[token.Token]) -> _Element:
         if len(children) == 1 and isinstance(children[0], span_token.RawText):
@@ -87,12 +148,26 @@ class XMLRenderer(BaseRenderer):
 
     def render_link(self, token: span_token.Link) -> _Element:
         elem = Element("link")
-        elem.attrib["target"] = self.escape_url(token.target)
+
+        elem.attrib["target"] = token.target
+
         if token.title:
             elem.attrib["title"] = token.title
         if token.label:
             elem.attrib["label"] = token.label
+
+        if len(token.children) == 1 and ":" in token.children[0].content and len(token.children[0].content.split(":")) == 2:
+            elem.attrib["tag"], elem.text = token.children[0].content.split(":")
+            return elem
+
         return self.render_children(elem, token.children)
+    
+    def render_gloss_link(self, token: GlossLink) -> _Element:
+        elem = Element("link")
+        elem.attrib["kind"] = "gloss"
+        elem.attrib["target"] = token.target
+        elem.text = token.target
+        return elem
 
     def render_auto_link(self, token: span_token.AutoLink) -> _Element:
         elem = Element("link")
@@ -251,12 +326,35 @@ class MarkdownDocument(BaseModel):
     name: Optional[str] = None
 
     @property
+    def data(self) -> Optional[Dict]:
+        if self.content.startswith("---\n"):
+            # YAML Frontmatter
+            _, datablock, *_ = self.content.split("---")
+            return yaml.safe_load(datablock)
+
+    @property
+    def nondata(self) -> str:
+        if self.content.startswith("---\n"):
+            _, _, *rest = self.content.split("---")
+            return "---".join(rest)
+        return self.content
+
+    @property
     def document(self) -> Document:
-        return Document(self.content)
+        return Document(self.nondata)
 
     @property
     def document_element(self) -> _Element:
-        return XMLRenderer().render(self.document)
+        doc = XMLRenderer().render(self.document)
+        if self.name:
+            doc.attrib["name"] = self.name
+        if self.data:
+            datablock = SubElement(doc, "data")
+            for key, val in self.data.items():
+                item = SubElement(datablock, "item")
+                item.attrib["key"] = key
+                item.attrib["value"] = val
+        return doc
 
 
 class MarkdownDirectory(DocgenDirectory[MarkdownDocument]):
