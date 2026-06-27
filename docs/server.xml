@@ -33,7 +33,8 @@
         <item name="List"/>
       </import>
     </imports>
-    <var name="server" type="FastAPI">
+    <var name="server">
+      <type>FastAPI</type>
       <doc>
         <p>FastAPI application instance</p>
       </doc>
@@ -58,12 +59,14 @@
         <doc>
           <p>Just an example of a model</p>
         </doc>
-        <var name="name" type="str">
+        <var name="name">
+          <type>str</type>
           <doc>
             <p>This is a name!</p>
           </doc>
         </var>
-        <var name="value" type="float">
+        <var name="value">
+          <type>float</type>
           <doc>
             <p>This is a value!</p>
           </doc>
@@ -86,7 +89,9 @@
         <doc>
           <p>This one isn't a model</p>
         </doc>
-        <var name="thing" type="str"/>
+        <var name="thing">
+          <type>str</type>
+        </var>
       </class>
     </file>
   </module>
@@ -186,7 +191,9 @@
         <inherits>
           <super name="BaseModel"/>
         </inherits>
-        <var name="dir" type="Path"/>
+        <var name="dir">
+          <type>Path</type>
+        </var>
         <method name="doclist">
           <sig>
             <returns>

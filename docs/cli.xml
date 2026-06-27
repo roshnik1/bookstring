@@ -1,0 +1,2154 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<module name="cli">
+  <init/>
+  <doc>
+    <p>TODO</p>
+  </doc>
+  <file name="__main__">
+    <imports>
+      <import module="typer"/>
+      <import module="projcli">
+        <item name="project_app"/>
+      </import>
+      <import module="servercli">
+        <item name="server_app"/>
+      </import>
+      <import module="appcli">
+        <item name="app_app"/>
+      </import>
+    </imports>
+  </file>
+  <file name="servercli">
+    <doc>
+      <heading level="1">Server Management CLI</heading>
+      <p>
+        <span>This CLI subcommand deals with managing the backend FastAPI server, mainly for routine tasks</span>
+        <br/>
+        <span>like starting the server in debug mode or generating type schemas.</span>
+      </p>
+    </doc>
+    <imports>
+      <import module="os"/>
+      <import module="sys"/>
+      <import module="importlib.util">
+        <item name="spec_from_file_location"/>
+        <item name="module_from_spec"/>
+      </import>
+      <import module="types">
+        <item name="ModuleType"/>
+      </import>
+      <import module="functools">
+        <item name="cached_property"/>
+      </import>
+      <import module="pathlib">
+        <item name="Path"/>
+      </import>
+      <import module="pydantic">
+        <item name="BaseModel"/>
+        <item name="Field"/>
+      </import>
+      <import module="typer"/>
+      <import module="config">
+        <item name="Config"/>
+      </import>
+      <import module="utils">
+        <item name="LSOFInfo"/>
+      </import>
+    </imports>
+    <function name="app_start">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>
+          <span>Starts the live development server using </span>
+          <code>uv run fastapi dev</code>
+          <span> from the </span>
+          <code>server/</code>
+          <span> directory.</span>
+        </p>
+      </doc>
+    </function>
+    <function name="app_status">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>Gets the status of the development server.</p>
+      </doc>
+    </function>
+    <class name="ServerManager">
+      <inherits>
+        <super name="BaseModel"/>
+      </inherits>
+      <var name="config">
+        <type>Config</type>
+      </var>
+      <var name="root">
+        <type>Path</type>
+      </var>
+      <method name="lsof">
+        <sig>
+          <returns>
+            <type>LSOFInfo</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="module">
+        <sig>
+          <returns>
+            <type>ModuleType</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="running">
+        <sig isvoid="1">
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="run_devserver">
+        <sig isvoid="1">
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="write_model_schemas_to">
+        <sig isvoid="1">
+          <arguments>
+            <arg name="self"/>
+            <arg name="path">
+              <type>Path</type>
+            </arg>
+          </arguments>
+        </sig>
+      </method>
+    </class>
+  </file>
+  <file name="config">
+    <imports>
+      <import module="pathlib">
+        <item name="Path"/>
+      </import>
+      <import module="tomllib">
+        <item name="load"/>
+      </import>
+      <import module="pydantic">
+        <item name="BaseModel"/>
+        <item name="Field"/>
+      </import>
+      <import module="typing">
+        <item name="Dict"/>
+        <item name="List"/>
+        <item name="Literal"/>
+        <item name="Optional"/>
+      </import>
+    </imports>
+    <class name="DocsConf">
+      <inherits>
+        <super name="BaseModel"/>
+      </inherits>
+      <doc>
+        <heading level="3">Documentation Config</heading>
+        <p>Configuration for documentation generation.</p>
+      </doc>
+      <var name="output_dir">
+        <type>Path</type>
+        <doc>
+          <p>Where to write out the generated XML docs</p>
+        </doc>
+      </var>
+      <var name="root_name">
+        <type>str</type>
+        <doc>
+          <p>Name of the 'root' document</p>
+        </doc>
+      </var>
+      <var name="known">
+        <type iter="list">KnownDirectory</type>
+        <doc>
+          <p>Known directories to target for document generation</p>
+        </doc>
+      </var>
+      <class name="KnownDirectory">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <doc>
+          <heading level="3">Directory to Document</heading>
+          <p>
+            <span>Directories marked here are 'known' to the documentation generator and will be used</span>
+            <br/>
+            <span>as sources for the docgen process.</span>
+          </p>
+        </doc>
+        <var name="dir">
+          <type>Path</type>
+          <doc>
+            <p>The specific directory (relative to project root) to target for docgen</p>
+          </doc>
+        </var>
+        <var name="lang">
+          <type>
+            <type/>
+            <type/>
+            <type/>
+            <type/>
+          </type>
+          <doc>
+            <code><![CDATA[    The language the directory code is any ([t]ype[s]cript or [py]thon, leave blank
+    for directories without code that may have markdown or data files).
+    
+]]></code>
+          </doc>
+        </var>
+        <var name="category">
+          <type>
+            <type/>
+            <type/>
+            <type/>
+          </type>
+          <doc>
+            <code><![CDATA[    The basic role/category of the directory; 'website' refers to those involved in
+    the Bookstring website itself and 'meta' refers to those involved in managing
+    this project.
+    
+]]></code>
+          </doc>
+        </var>
+      </class>
+    </class>
+    <class name="Config">
+      <inherits>
+        <super name="BaseModel"/>
+      </inherits>
+      <doc>
+        <heading level="3">General Config</heading>
+        <p>This model tracks the static config values that may be used throughout the project.</p>
+        <p>
+          <span>NOTE: Please create defaults for everything in here so that a blind </span>
+          <code>Config()</code>
+          <br/>
+          <span>creates a valid config object.</span>
+        </p>
+      </doc>
+      <var name="ports">
+        <type>
+          <type/>
+          <type>
+            <type/>
+            <type/>
+            <type/>
+          </type>
+          <type>int</type>
+        </type>
+        <doc>
+          <code><![CDATA[Ports at which the frontend app and backend api will be served on localhost
+]]></code>
+        </doc>
+      </var>
+      <var name="models">
+        <type>
+          <type/>
+          <type const="1">schema_file<type/></type>
+          <type>str</type>
+        </type>
+        <doc>
+          <code><![CDATA[For synchronizing models between the server and app
+]]></code>
+        </doc>
+      </var>
+      <var name="docs">
+        <type>DocsConf</type>
+        <doc>
+          <code><![CDATA[For controlling how documentation generation works
+]]></code>
+        </doc>
+      </var>
+      <method name="load">
+        <sig>
+          <returns>
+            <type/>
+          </returns>
+          <arguments>
+            <arg name="cls"/>
+            <arg name="path">
+              <type>Path</type>
+            </arg>
+          </arguments>
+        </sig>
+      </method>
+    </class>
+  </file>
+  <file name="projcli">
+    <doc>
+      <heading level="1">Project Management CLI</heading>
+      <p>
+        <span>This CLI subcommand deals with managing the BookString project itself. For now it's entirely</span>
+        <br/>
+        <span>informational but as the project develops we can add common development patterns here to enforce</span>
+        <br/>
+        <span>standardization.</span>
+      </p>
+    </doc>
+    <imports>
+      <import module="tomllib">
+        <item name="load"/>
+      </import>
+      <import module="subprocess"/>
+      <import module="pathlib">
+        <item name="Path"/>
+      </import>
+      <import module="pydantic">
+        <item name="BaseModel"/>
+        <item name="Field"/>
+      </import>
+      <import module="typer"/>
+      <import module="config">
+        <item name="Config"/>
+      </import>
+      <import module="appcli">
+        <item name="manager"/>
+      </import>
+      <import module="servercli">
+        <item name="manager"/>
+      </import>
+      <import module="docgen">
+        <item name="PythonDirectory"/>
+        <item name="DocumentationBuilder"/>
+      </import>
+      <import module="typing">
+        <item name="Dict"/>
+        <item name="List"/>
+        <item name="Tuple"/>
+      </import>
+    </imports>
+    <function name="project_sync_models">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>Synchronize models from server to app</p>
+      </doc>
+    </function>
+    <function name="project_dump_config">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>Dumps the current project config to console as JSON</p>
+      </doc>
+    </function>
+    <function name="project_status">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>Dumps the current project status to console as JSON</p>
+      </doc>
+    </function>
+    <function name="project_docs">
+      <sig isvoid="1">
+        <arguments>
+          <arg name="target">
+            <type>Path</type>
+          </arg>
+          <arg name="output">
+            <type>Path</type>
+          </arg>
+        </arguments>
+      </sig>
+      <doc>
+        <p>Generate XML docs for the target python project to the output path</p>
+      </doc>
+    </function>
+    <function name="project_docgen">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>Generate XML docs for the full project.</p>
+      </doc>
+    </function>
+    <class name="ProjectStatus">
+      <inherits>
+        <super name="BaseModel"/>
+      </inherits>
+      <var name="version">
+        <type>str</type>
+      </var>
+      <var name="branch">
+        <type>str</type>
+      </var>
+      <var name="commit_hash">
+        <type>str</type>
+      </var>
+      <var name="changes">
+        <type iter="list">
+          <type/>
+          <type>str</type>
+          <type/>
+        </type>
+      </var>
+    </class>
+    <class name="ProjectManager">
+      <inherits>
+        <super name="BaseModel"/>
+      </inherits>
+      <var name="config">
+        <type>Config</type>
+      </var>
+      <var name="root">
+        <type>Path</type>
+      </var>
+      <method name="paths">
+        <sig>
+          <returns>
+            <type>
+              <type/>
+              <type>str</type>
+              <type>Path</type>
+            </type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+        <doc>
+          <p>All the important directory paths in the project.</p>
+        </doc>
+      </method>
+      <method name="models_schema_path">
+        <sig>
+          <returns>
+            <type>Path</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="typedefs_path">
+        <sig>
+          <returns>
+            <type>Path</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="pyproject">
+        <sig>
+          <returns>
+            <type>Dict</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="status">
+        <sig>
+          <returns>
+            <type>ProjectStatus</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+    </class>
+  </file>
+  <module name="board">
+    <init/>
+    <doc>
+      <p>TODO</p>
+    </doc>
+    <file name="board">
+      <imports>
+        <import module="uuid">
+          <item name="uuid4"/>
+        </import>
+        <import module="json"/>
+        <import module="pathlib">
+          <item name="Path"/>
+        </import>
+        <import module="datetime">
+          <item name="datetime"/>
+          <item name="timezone"/>
+        </import>
+        <import module="pydantic">
+          <item name="BaseModel"/>
+          <item name="Field"/>
+        </import>
+        <import module="board.task">
+          <item name="Task"/>
+          <item name="TaskStage"/>
+        </import>
+        <import module="typing">
+          <item name="List"/>
+          <item name="Dict"/>
+          <item name="Optional"/>
+          <item name="Set"/>
+        </import>
+      </imports>
+      <class name="Board">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="stages">
+          <type iter="list">TaskStage</type>
+        </var>
+        <var name="tasks">
+          <type>
+            <type/>
+            <type>str</type>
+            <type>Task</type>
+          </type>
+        </var>
+        <method name="initial_stage">
+          <sig>
+            <returns>
+              <type>TaskStage</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="terminal_stages">
+          <sig>
+            <returns>
+              <type iter="list">TaskStage</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="create">
+          <sig>
+            <returns>
+              <type/>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="name">
+                <type>str</type>
+              </arg>
+              <arg name="description">
+                <type>str</type>
+              </arg>
+              <arg name="tags">
+                <type>str<type/><type/></type>
+              </arg>
+              <arg name="data">
+                <type>Dict<type/></type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="save">
+          <sig isvoid="1">
+            <arguments>
+              <arg name="self"/>
+              <arg name="file">
+                <type>Path</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+    </file>
+    <file name="task">
+      <imports>
+        <import module="datetime">
+          <item name="datetime"/>
+        </import>
+        <import module="pydantic">
+          <item name="BaseModel"/>
+          <item name="Field"/>
+        </import>
+        <import module="typing">
+          <item name="Optional"/>
+          <item name="List"/>
+          <item name="Tuple"/>
+          <item name="Dict"/>
+          <item name="Hashable"/>
+          <item name="Set"/>
+        </import>
+      </imports>
+      <class name="TaskStage">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <inherits>
+          <super name="Hashable"/>
+        </inherits>
+        <var name="name">
+          <type>str</type>
+        </var>
+        <var name="description">
+          <type>str</type>
+        </var>
+        <var name="transitions">
+          <type iter="list">
+            <union>
+              <type/>
+              <type>
+                <type/>
+                <type/>
+                <type>str</type>
+              </type>
+            </union>
+          </type>
+        </var>
+        <method name="hash">
+          <sig>
+            <returns>
+              <type>int</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="Task">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="id">
+          <type>str</type>
+        </var>
+        <var name="name">
+          <type>str</type>
+        </var>
+        <var name="description">
+          <type>str</type>
+        </var>
+        <var name="history">
+          <type iter="list">
+            <type/>
+            <type>TaskStage</type>
+            <type>datetime</type>
+            <type>
+              <type/>
+              <type/>
+              <type>str</type>
+              <type>str</type>
+            </type>
+          </type>
+        </var>
+        <var name="tags">
+          <type>str<type/></type>
+        </var>
+        <var name="data">
+          <type>Dict<type/></type>
+        </var>
+      </class>
+    </file>
+  </module>
+  <file name="utils">
+    <imports>
+      <import module="functools">
+        <item name="cached_property"/>
+      </import>
+      <import module="subprocess">
+        <item name="run"/>
+        <item name="CompletedProcess"/>
+      </import>
+      <import module="pydantic">
+        <item name="BaseModel"/>
+      </import>
+      <import module="typing">
+        <item name="Tuple"/>
+        <item name="Optional"/>
+      </import>
+    </imports>
+    <class name="LSOFInfo">
+      <inherits>
+        <super name="BaseModel"/>
+      </inherits>
+      <var name="port">
+        <type>int</type>
+      </var>
+      <method name="_process">
+        <sig>
+          <returns>
+            <type>CompletedProcess</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="raw">
+        <sig>
+          <returns>
+            <type>
+              <type/>
+              <type/>
+              <type>str</type>
+              <type>str</type>
+              <type>str</type>
+              <type>str</type>
+            </type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="running">
+        <sig>
+          <returns>
+            <type>bool</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="pid">
+        <sig>
+          <returns>
+            <type>int</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="program">
+        <sig>
+          <returns>
+            <type>str</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="mapping">
+        <sig>
+          <returns>
+            <type>str</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+    </class>
+  </file>
+  <file name="appcli">
+    <doc>
+      <heading level="1">App Management CLI</heading>
+      <p>
+        <span>This CLI subcommand deals with managing the frontend React application. Mainly for routine</span>
+        <br/>
+        <span>tasks like launching the frontend build with HMR enabled.</span>
+      </p>
+    </doc>
+    <imports>
+      <import module="os"/>
+      <import module="subprocess">
+        <item name="run"/>
+      </import>
+      <import module="functools">
+        <item name="cached_property"/>
+      </import>
+      <import module="pathlib">
+        <item name="Path"/>
+      </import>
+      <import module="pydantic">
+        <item name="BaseModel"/>
+        <item name="Field"/>
+      </import>
+      <import module="typer"/>
+      <import module="config">
+        <item name="Config"/>
+      </import>
+      <import module="utils">
+        <item name="LSOFInfo"/>
+      </import>
+    </imports>
+    <function name="app_start">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>
+          <span>Starts the live development server using </span>
+          <code>deno run dev</code>
+          <span> from the </span>
+          <code>app/</code>
+          <span> directory.</span>
+        </p>
+      </doc>
+    </function>
+    <function name="app_status">
+      <sig isvoid="1" isstart="1"/>
+      <doc>
+        <p>Gets the status of the development server.</p>
+      </doc>
+    </function>
+    <class name="ApplicationManager">
+      <inherits>
+        <super name="BaseModel"/>
+      </inherits>
+      <var name="config">
+        <type>Config</type>
+      </var>
+      <var name="root">
+        <type>Path</type>
+      </var>
+      <method name="lsof">
+        <sig>
+          <returns>
+            <type>LSOFInfo</type>
+          </returns>
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="running">
+        <sig isvoid="1">
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="run_devserver">
+        <sig isvoid="1">
+          <arguments>
+            <arg name="self"/>
+          </arguments>
+        </sig>
+      </method>
+      <method name="build_types">
+        <sig isvoid="1">
+          <arguments>
+            <arg name="self"/>
+            <arg name="schema_def">
+              <type>Path</type>
+            </arg>
+            <arg name="type_def">
+              <type>Path</type>
+            </arg>
+          </arguments>
+        </sig>
+        <doc>
+          <p>
+            <span>Use </span>
+            <link target="https://openapi-ts.dev">openapi-typescript</link>
+            <span> to generate type definitions from a schema</span>
+          </p>
+        </doc>
+      </method>
+    </class>
+  </file>
+  <module name="docgen">
+    <init/>
+    <doc>
+      <p>TODO</p>
+    </doc>
+    <file name="project_docs">
+      <imports>
+        <import module="pathlib">
+          <item name="Path"/>
+        </import>
+        <import module="pydantic">
+          <item name="BaseModel"/>
+        </import>
+        <import module="config">
+          <item name="DocsConf"/>
+        </import>
+        <import module="docgen.md_xml">
+          <item name="MarkdownDocument"/>
+          <item name="MarkdownDirectory"/>
+        </import>
+        <import module="docgen.pydocs">
+          <item name="PythonDirectory"/>
+        </import>
+        <import module="docgen.tsdocs">
+          <item name="TypeScriptDirectory"/>
+        </import>
+        <import module="typing">
+          <item name="List"/>
+        </import>
+      </imports>
+      <class name="DocumentationBuilder">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="root">
+          <type>Path</type>
+        </var>
+        <var name="conf">
+          <type>DocsConf</type>
+        </var>
+        <method name="docs_dir">
+          <sig>
+            <returns>
+              <type>Path</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="root_docs">
+          <sig>
+            <returns>
+              <type>MarkdownDirectory</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="build">
+          <sig isvoid="1">
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+    </file>
+    <file name="core">
+      <imports>
+        <import module="abc">
+          <item name="ABC"/>
+          <item name="abstractmethod"/>
+        </import>
+        <import module="pathlib">
+          <item name="Path"/>
+        </import>
+        <import module="pydantic">
+          <item name="BaseModel"/>
+          <item name="Field"/>
+        </import>
+        <import module="lxml">
+          <item name="etree"/>
+        </import>
+        <import module="lxml.etree">
+          <item name="ElementTree"/>
+          <item name="Element"/>
+          <item name="_ElementTree"/>
+          <item name="_Element"/>
+          <item name="SubElement"/>
+        </import>
+        <import module="typing">
+          <item name="List"/>
+          <item name="Set"/>
+          <item name="ClassVar"/>
+          <item name="Optional"/>
+          <item name="Generic"/>
+          <item name="TypeVar"/>
+        </import>
+      </imports>
+      <class name="DocgenDirectory">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <inherits/>
+        <var name="IGNORE_PATTERNS">
+          <type>str<type/><type/></type>
+        </var>
+        <var name="path">
+          <type>Path</type>
+        </var>
+        <var name="tree">
+          <type iter="list" const="1">DocgenDirectory | T</type>
+        </var>
+        <method name="parse_directory">
+          <sig>
+            <returns>
+              <type/>
+            </returns>
+            <arguments>
+              <arg name="cls"/>
+              <arg name="path">
+                <type>Path</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="parse_path">
+          <sig>
+            <returns>
+              <type>T<type/></type>
+            </returns>
+            <arguments>
+              <arg name="cls"/>
+              <arg name="path">
+                <type>Path</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="directory_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="doctree">
+          <sig>
+            <returns>
+              <type>_ElementTree</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="xml">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+    </file>
+    <file name="pydocs">
+      <imports>
+        <import module="ast"/>
+        <import module="ast">
+          <item name="AST"/>
+          <item name="Module"/>
+          <item name="Import"/>
+          <item name="ImportFrom"/>
+          <item name="Assign"/>
+          <item name="AnnAssign"/>
+          <item name="Expr"/>
+          <item name="FunctionDef"/>
+          <item name="AsyncFunctionDef"/>
+          <item name="ClassDef"/>
+          <item name="BinOp"/>
+          <item name="Tuple"/>
+          <item name="Constant"/>
+          <item name="Name"/>
+          <item name="Attribute"/>
+          <item name="Subscript"/>
+          <item name="stmt"/>
+          <item name="expr"/>
+          <item name="unparse"/>
+          <item name="walk"/>
+        </import>
+        <import module="pathlib">
+          <item name="Path"/>
+        </import>
+        <import module="pydantic">
+          <item name="BaseModel"/>
+          <item name="Field"/>
+        </import>
+        <import module="lxml.etree">
+          <item name="ElementTree"/>
+          <item name="Element"/>
+          <item name="_ElementTree"/>
+          <item name="_Element"/>
+          <item name="SubElement"/>
+        </import>
+        <import module="lxml">
+          <item name="etree"/>
+        </import>
+        <import module="docgen.core">
+          <item name="DocgenDirectory"/>
+        </import>
+        <import module="docgen.md_xml">
+          <item name="MarkdownDocument"/>
+        </import>
+        <import module="typing">
+          <item name="List"/>
+          <item name="Tuple"/>
+          <item name="Optional"/>
+          <item name="ClassVar"/>
+          <item name="Literal"/>
+        </import>
+      </imports>
+      <class name="PythonDirectory">
+        <inherits/>
+        <var name="tree">
+          <type iter="list" const="1">PythonDirectory | PythonModule | MarkdownDocument</type>
+        </var>
+        <method name="parse_path">
+          <sig>
+            <returns>
+              <type const="1">PythonModule | MarkdownDocument<type/></type>
+            </returns>
+            <arguments>
+              <arg name="cls"/>
+              <arg name="path">
+                <type>Path</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="docstr">
+          <sig>
+            <returns>
+              <type>MarkdownDocument</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="init_mod">
+          <sig>
+            <returns>
+              <type const="1">PythonModule<type/></type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="directory_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="PythonModule">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="path">
+          <type>Path</type>
+        </var>
+        <var name="directory">
+          <type>PythonDirectory<type/></type>
+        </var>
+        <var name="module">
+          <type>Module</type>
+        </var>
+        <method name="parse_pyfile">
+          <sig>
+            <returns>
+              <type/>
+            </returns>
+            <arguments>
+              <arg name="cls"/>
+              <arg name="path">
+                <type>Path</type>
+              </arg>
+              <arg name="directory">
+                <type>PythonDirectory<type/></type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="docstr">
+          <sig>
+            <returns>
+              <type>MarkdownDocument<type/></type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="_imports">
+          <sig>
+            <returns>
+              <type iter="list">
+                <union>
+                  <type>Import</type>
+                  <type>ImportFrom</type>
+                </union>
+              </type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="imports">
+          <sig>
+            <returns>
+              <type iter="list" const="1">PythonImport</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="topvars">
+          <sig>
+            <returns>
+              <type iter="list" const="1">PythonScopedVariable</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="functions">
+          <sig>
+            <returns>
+              <type iter="list" const="1">PythonFunction</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="classes">
+          <sig>
+            <returns>
+              <type iter="list" const="1">PythonClass</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="file_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="init_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="PythonImport">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="module">
+          <type>PythonModule</type>
+        </var>
+        <var name="node">
+          <type/>
+        </var>
+        <method name="parent_names">
+          <sig>
+            <returns>
+              <type iter="list">str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="name">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="import_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="PythonTypeAnnotation">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="node">
+          <type>expr</type>
+        </var>
+        <method name="_resolve_subscript_stack">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="elem">
+                <type>_Element</type>
+              </arg>
+              <arg name="subsc">
+                <type>Subscript</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="type_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="PythonFunction">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="scope">
+          <type/>
+        </var>
+        <var name="node">
+          <type/>
+        </var>
+        <method name="docstr">
+          <sig>
+            <returns>
+              <type>MarkdownDocument<type/></type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="arguments">
+          <sig>
+            <returns>
+              <type iter="list">
+                <type/>
+                <type>str</type>
+                <type>PythonTypeAnnotation<type/></type>
+                <type>
+                  <type/>
+                  <type/>
+                  <type/>
+                  <type/>
+                </type>
+              </type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="returns">
+          <sig>
+            <returns>
+              <type>PythonTypeAnnotation<type/></type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="_signature_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="function_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="PythonClass">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="module">
+          <type>PythonModule</type>
+        </var>
+        <var name="node">
+          <type>ClassDef</type>
+        </var>
+        <var name="outerclass">
+          <type const="1">PythonClass<type/></type>
+        </var>
+        <method name="docstr">
+          <sig>
+            <returns>
+              <type>MarkdownDocument<type/></type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="members">
+          <sig>
+            <returns>
+              <type iter="list" const="1">PythonScopedVariable</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="methods">
+          <sig>
+            <returns>
+              <type iter="list" const="1">PythonFunction</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="innerclasses">
+          <sig>
+            <returns>
+              <type iter="list" const="1">PythonClass</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="class_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="PythonScopedVariable">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="node">
+          <type>AnnAssign</type>
+        </var>
+        <var name="docnode">
+          <type>str<type/></type>
+        </var>
+        <var name="uses">
+          <type iter="list">stmt</type>
+        </var>
+        <var name="scope">
+          <type>
+            <type/>
+            <union>
+              <type/>
+              <type>PythonModule</type>
+            </union>
+          </type>
+        </var>
+        <method name="name">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="docstr">
+          <sig>
+            <returns>
+              <type>MarkdownDocument<type/></type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="scan_statements">
+          <sig>
+            <returns>
+              <type/>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="body">
+                <type iter="list">stmt</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="variable_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+    </file>
+    <file name="md_xml">
+      <doc>
+        <p>XML renderer for mistletoe.</p>
+      </doc>
+      <imports>
+        <import module="yaml"/>
+        <import module="re">
+          <item name="compile"/>
+          <item name="Pattern"/>
+          <item name="Match"/>
+          <item name="MULTILINE"/>
+        </import>
+        <import module="pathlib">
+          <item name="Path"/>
+        </import>
+        <import module="pydantic">
+          <item name="BaseModel"/>
+        </import>
+        <import module="lxml.etree">
+          <item name="Element"/>
+          <item name="_Element"/>
+          <item name="SubElement"/>
+          <item name="CDATA"/>
+        </import>
+        <import module="itertools">
+          <item name="chain"/>
+        </import>
+        <import module="urllib.parse">
+          <item name="quote"/>
+        </import>
+        <import module="mistletoe">
+          <item name="Document"/>
+          <item name="block_token"/>
+        </import>
+        <import module="mistletoe">
+          <item name="token"/>
+          <item name="span_token"/>
+        </import>
+        <import module="mistletoe.block_token">
+          <item name="HtmlBlock"/>
+        </import>
+        <import module="mistletoe.span_token">
+          <item name="HtmlSpan"/>
+        </import>
+        <import module="mistletoe.base_renderer">
+          <item name="BaseRenderer"/>
+        </import>
+        <import module="docgen.core">
+          <item name="DocgenDirectory"/>
+        </import>
+        <import module="typing">
+          <item name="List"/>
+          <item name="Optional"/>
+          <item name="ClassVar"/>
+          <item name="Dict"/>
+        </import>
+      </imports>
+      <class name="DirectiveToken">
+        <inherits/>
+        <var name="pattern">
+          <type>Pattern<type/></type>
+        </var>
+        <var name="directive">
+          <type>str</type>
+          <doc>
+            <p>Directive name (lowercase letters only)</p>
+          </doc>
+        </var>
+        <var name="target">
+          <type>str<type/></type>
+          <doc>
+            <p>Target name (lowercase letters, digits, and underscores)</p>
+          </doc>
+        </var>
+        <var name="message">
+          <type>str<type/></type>
+          <doc>
+            <p>Directive message</p>
+          </doc>
+        </var>
+        <method name="__init__">
+          <sig isvoid="1">
+            <arguments>
+              <arg name="self"/>
+              <arg name="regex">
+                <type>Match</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="GlossLink">
+        <inherits/>
+        <var name="pattern">
+          <type>Pattern<type/></type>
+        </var>
+        <var name="target">
+          <type>str</type>
+        </var>
+        <method name="__init__">
+          <sig isvoid="1">
+            <arguments>
+              <arg name="self"/>
+              <arg name="match_obj"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="XMLRenderer">
+        <inherits>
+          <super name="BaseRenderer"/>
+        </inherits>
+        <doc>
+          <p>XML renderer class.</p>
+          <p>
+            <span>See mistletoe.base_renderer module for more info.</span>
+            <br/>
+            <span>See mistletoe.html_renderer module for template / baseline.</span>
+          </p>
+        </doc>
+        <method name="__init__">
+          <sig isvoid="1">
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="__exit__">
+          <sig isvoid="1">
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_directive_token">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type>DirectiveToken</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_children">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="element">
+                <type>_Element</type>
+              </arg>
+              <arg name="children">
+                <type iter="list">token.Token</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_to_plain">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_strong">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_emphasis">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_inline_code">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_strikethrough">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_image">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_link">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_gloss_link">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type>GlossLink</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_auto_link">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_escape_sequence">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_raw_text">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_heading">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_html_span">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_quote">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_paragraph">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_block_code">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_list">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_list_item">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_table">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_table_row">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+              <arg name="is_header"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_table_cell">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+              <arg name="in_header"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_thematic_break">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_line_break">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_html_block">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="render_document">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="token">
+                <type/>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="escape_html_text">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+              <arg name="s">
+                <type>str</type>
+              </arg>
+            </arguments>
+          </sig>
+          <doc>
+            <p>
+              <span>Like </span>
+              <code>html.escape()</code>
+              <span>, but this  looks into the current rendering options</span>
+              <br/>
+              <span>to decide which of the quotes (double, single, or both) to escape.</span>
+            </p>
+            <p>
+              <span>Intended for escaping text content. To escape content of an attribute,</span>
+              <br/>
+              <span>simply call </span>
+              <code>html.escape()</code>
+              <span>.</span>
+            </p>
+          </doc>
+        </method>
+        <method name="escape_url">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="raw">
+                <type>str</type>
+              </arg>
+            </arguments>
+          </sig>
+          <doc>
+            <p>Escape urls to prevent code injection craziness. (Hopefully.)</p>
+          </doc>
+        </method>
+      </class>
+      <class name="MarkdownDocument">
+        <inherits>
+          <super name="BaseModel"/>
+        </inherits>
+        <var name="content">
+          <type>str</type>
+        </var>
+        <var name="name">
+          <type>str<type/></type>
+        </var>
+        <method name="data">
+          <sig>
+            <returns>
+              <type>Dict<type/></type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="nondata">
+          <sig>
+            <returns>
+              <type>str</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="document">
+          <sig>
+            <returns>
+              <type>Document</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+        <method name="document_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+      <class name="MarkdownDirectory">
+        <inherits/>
+        <var name="tree">
+          <type iter="list" const="1">MarkdownDocument | MarkdownDirectory</type>
+        </var>
+        <method name="parse_path">
+          <sig>
+            <returns>
+              <type>MarkdownDocument<type/></type>
+            </returns>
+            <arguments>
+              <arg name="cls"/>
+              <arg name="path">
+                <type>Path</type>
+              </arg>
+            </arguments>
+          </sig>
+        </method>
+        <method name="directory_element">
+          <sig>
+            <returns>
+              <type>_Element</type>
+            </returns>
+            <arguments>
+              <arg name="self"/>
+            </arguments>
+          </sig>
+        </method>
+      </class>
+    </file>
+    <file name="tsdocs">
+      <imports>
+        <import module="docgen.core">
+          <item name="DocgenDirectory"/>
+        </import>
+      </imports>
+      <class name="TypeScriptDirectory">
+        <inherits/>
+      </class>
+    </file>
+  </module>
+</module>

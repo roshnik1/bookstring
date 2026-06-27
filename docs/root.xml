@@ -1,0 +1,262 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<docsite name="">
+  <doc name="branch">
+    <heading level="1">Planning and Organization</heading>
+    <p>With version control!</p>
+    <p>The core concept here is to integrate architecture planning, detailed documentation, and ideation naturally around and alongside code. This may happen in two ways:</p>
+    <heading level="2">Markdown Files</heading>
+    <p>
+      <span>Standalone </span>
+      <link kind="gloss" target="markdown">markdown</link>
+      <span> files (like this one!) given </span>
+      <code>{ALLCAPS}.md</code>
+      <span> or </span>
+      <code>{dash-case}.md</code>
+      <span> names. These may include </span>
+      <link kind="gloss" target="yaml">yaml</link>
+      <span> </span>
+      <link target="#markdown.frontmatter">frontmatter</link>
+      <span> and/or </span>
+      <link target="#markdown.data">data blocks</link>
+      <span>.</span>
+    </p>
+    <heading level="2">Code Documentation</heading>
+    <p>
+      <span>In </span>
+      <link kind="gloss" target="python">python</link>
+      <span>, use </span>
+      <link target="#python.conventions.doctrings">docstrings</link>
+      <span> and in </span>
+      <link kind="gloss" target="typescript">typescript</link>
+      <span> use </span>
+      <link target="#typescript.jsdoc">jsdocs</link>
+      <span>.</span>
+    </p>
+    <data>
+      <item key="branch" value="experimental/declarative-project-management"/>
+    </data>
+  </doc>
+  <doc name="README">
+    <heading level="1">Bookstring Development</heading>
+    <p>This is the development project for Bookstring.</p>
+    <heading level="2">Installing</heading>
+    <p>So far I've only tested Bookstring on Ubuntu 20.04 but it should work on most Linux or MacOS environments.</p>
+    <p>Of course, the first step for the initial install is to clone the repo:</p>
+    <code lang="shell"><![CDATA[$ git clone git@github.com:roshnik1/bookstring.git
+]]></code>
+    <heading level="3">Server</heading>
+    <p>
+      <link target="https://docs.astral.sh/uv/getting-started/installation/#standalone-installer">Install uv</link>
+      <span> using the installation script provided by Astral:</span>
+    </p>
+    <code lang="shell"><![CDATA[$ curl -LsSf https://astral.sh/uv/install.sh | sh
+]]></code>
+    <p>
+      <span>Enter the Bookstring directory and synchronize to create your </span>
+      <link target="https://docs.astral.sh/uv/pip/environments/">uv-managed virtual environment</link>
+      <span>.</span>
+    </p>
+    <code lang="shell"><![CDATA[cd bookstring
+uv sync
+]]></code>
+    <p>You should see the python packages install, if that process completes successfully then everything needed to run the server is ready!</p>
+    <heading level="3">CLI</heading>
+    <p>Installing the CLI follows the same steps as the server at the moment as they share a uv project and dependencies.</p>
+    <p>
+      <task status="unsorted">Currently the CLI is run with `uv run cli`, which is less ergonomic than a system install.</task>
+    </p>
+    <heading level="3">App</heading>
+    <p>
+      <link target="https://docs.deno.com/runtime/getting_started/installation/">Install deno</link>
+      <span> using the installation script they provide:</span>
+    </p>
+    <code lang="shell"><![CDATA[curl -fsSL https://deno.land/install.sh | sh
+]]></code>
+    <p>Enter the app directory and install the typescript dependencies.</p>
+    <code lang="shell"><![CDATA[cd bookstring/app
+deno install
+]]></code>
+    <p>You should see the typescript and javascript packages install, if that process completes successfully then everything needed to run the app is ready!</p>
+    <heading level="2">Running</heading>
+    <p>
+      <span>The CLI utility can handle running the core parts of Bookstring. However, if desired you can always fall back to the underlying tools (</span>
+      <code>uv</code>
+      <span> and </span>
+      <code>deno</code>
+      <span>) to run things.</span>
+    </p>
+    <heading level="3">Server</heading>
+    <p>
+      <strong>With the CLI</strong>
+    </p>
+    <code lang="shell"><![CDATA[uv run cli server start
+]]></code>
+    <p>
+      <strong>With UV</strong>
+    </p>
+    <code lang="shell"><![CDATA[cd server
+uv run fastapi dev --port 8181
+]]></code>
+    <heading level="3">App</heading>
+    <p>
+      <strong>With the CLI</strong>
+    </p>
+    <code lang="shell"><![CDATA[uv run cli app start
+]]></code>
+    <p>
+      <strong>With deno</strong>
+    </p>
+    <code lang="shell"><![CDATA[cd app
+deno run dev --port 8080
+]]></code>
+    <heading level="3">Documentation</heading>
+    <p>
+      <task status="unsorted">documentation building not ready yet</task>
+    </p>
+    <heading level="3">Checks</heading>
+    <p>
+      <task status="unsorted">code checks not ready yet</task>
+    </p>
+    <heading level="2">Development</heading>
+    <p>Useful information for developing in Bookstring.</p>
+    <heading level="3">Local Dev Sites</heading>
+    <list>
+      <item>
+        <span>Server: </span>
+        <link target="http://localhost:8181/">http://localhost:8181/</link>
+      </item>
+      <item>
+        <span>App: </span>
+        <link target="http://localhost:8080/">http://localhost:8080/</link>
+      </item>
+    </list>
+    <heading level="3">Branches</heading>
+    <p>Since this is (at least for now) just a two-person development project and there's no production deployment to worry about I think we can take advantage of cheap git branches to explore ideas more easily. Here's what I'm thinking:</p>
+    <list>
+      <item>
+        <code>setup</code>
+        <span> - This is my branch to handle the initial setup of the project. Once everything is ready for proper development to start it will be merged directly into </span>
+        <code>main</code>
+        <span> and then </span>
+        <code>dev</code>
+        <span> will be branched off </span>
+        <code>main</code>
+        <span>.</span>
+      </item>
+      <item>
+        <code>main</code>
+        <span> - The 'canonical' version of the project. We should keep </span>
+        <code>main</code>
+        <span> in a stable state (so resolve bugs and skeleton work before merging there) and be relatively conservative about introducing code we aren't sure about there. When there's an actual prod version of the site, this will be the branch we deploy from.</span>
+      </item>
+      <item>
+        <code>dev</code>
+        <span> - The development branch, allowed to be a little messy but we do want to fix any bugs that arise here before merging into </span>
+        <code>main</code>
+        <span>.</span>
+      </item>
+      <item>
+        <code>experimental/&lt;idea&gt;</code>
+        <span> - For speculative concepts that may or may not work out (like this whole declarative project management thing). Experimental branches can break things and even if the idea works out they may not get merged because we want to do it differently when it's 'for real'.</span>
+      </item>
+      <item>
+        <code>feature/&lt;name&gt;</code>
+        <span> - For implementing a new feature, something at least somewhat well-defined and that we know we want to include in the full project.</span>
+      </item>
+      <item>
+        <code>bugfix/&lt;name&gt;</code>
+        <span> - For fixing a known bug in the code.</span>
+      </item>
+      <item>
+        <code>cleanup/&lt;name&gt;</code>
+        <span> - For refactoring, cleaning out old code, or handling other minor chores.</span>
+      </item>
+      <item>
+        <code>planning/&lt;name&gt;</code>
+        <span> - For planning project development.</span>
+      </item>
+      <item>
+        <code>docs/&lt;name&gt;</code>
+        <span> - For writing and expanding code documentation.</span>
+      </item>
+    </list>
+    <heading level="3">Project Overview</heading>
+    <p>This is a quick map of the project's directories and what they're for.</p>
+    <list>
+      <item>
+        <code>app/</code>
+        <span> - Frontend application code.</span>
+      </item>
+      <item>
+        <code>cli/</code>
+        <span> - CLI utility code.</span>
+      </item>
+      <item>
+        <code>docs/</code>
+        <span> - Generated documentation XMLs.</span>
+      </item>
+      <item>
+        <code>project/</code>
+        <span> - Project management and top-level planning.</span>
+      </item>
+      <item>
+        <code>server/</code>
+        <span> - Backend API server code.</span>
+      </item>
+    </list>
+  </doc>
+  <doc name="home">
+    <heading level="1">Bookstring</heading>
+    <p>
+      <span>This is the documentation and outline for </span>
+      <link kind="gloss" target="Bookstring">Bookstring</link>
+      <span>, a reading progress enhancer and literary discussion community in very early development.</span>
+    </p>
+    <p>Said development is the focus of this document and site at the moment.</p>
+    <heading level="2">Backend Server</heading>
+    <p>
+      <span>The </span>
+      <link target="#server">backend server</link>
+      <span> is a </span>
+      <link target="#python.libs.fastapi">FastAPI</link>
+      <span> </span>
+      <link kind="gloss" target="python">python</link>
+      <span> application.</span>
+      <br/>
+      <task status="unsorted">expand this</task>
+    </p>
+    <heading level="2">CLI Utility</heading>
+    <p>
+      <span>The </span>
+      <link target="#cli">command-line utility</link>
+      <span> is a </span>
+      <link target="#python.libs.typer">Typer</link>
+      <span> </span>
+      <link kind="gloss" target="python">python</link>
+      <span> application.</span>
+      <br/>
+      <task status="unsorted">expand this</task>
+    </p>
+    <heading level="2">Front-End App</heading>
+    <p>
+      <span>The </span>
+      <link target="#app">website app</link>
+      <span> is a </span>
+      <link kind="gloss" target="typescript">typescript</link>
+      <span>-</span>
+      <link kind="gloss" target="react">react</link>
+      <span> application.</span>
+      <br/>
+      <task status="unsorted">expand</task>
+    </p>
+    <heading level="2">Docs</heading>
+    <p>
+      <span>Generated code documentation and sourcemap trees.</span>
+      <br/>
+      <task status="unsorted">expand</task>
+    </p>
+    <data>
+      <item key="gloss" value="bookstring"/>
+    </data>
+  </doc>
+</docsite>

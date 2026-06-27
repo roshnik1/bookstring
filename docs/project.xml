@@ -1,0 +1,161 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<docsite name="project">
+  <doc name="planning">
+    <heading level="1">Project Planning</heading>
+    <p>Core idea: reading tracker and social media, 'Goodreads crossed with Reddit'.</p>
+    <heading level="2">Semantic Layer</heading>
+    <p>This is what I think could become the 'secret sauce' for this project. Consider a book, a chapter, an author, or a book series as possible 'objects'. By tying a room (forum/channel) to an object, we structure conversation around the topic. By using the structure of the objects, we can compose structure in the rooms.</p>
+    <heading level="2">Tech Stack</heading>
+    <p>Languages:</p>
+    <list>
+      <item>
+        <span>TypeScript frontend (</span>
+        <link target="https://deno.com/">deno</link>
+        <span> runtime manager)</span>
+      </item>
+      <item>
+        <span>Python backend (</span>
+        <link target="https://docs.astral.sh/uv/">uv</link>
+        <span> project manager)</span>
+      </item>
+      <item>
+        <span>XML document format (postgres supports </span>
+        <link target="https://www.postgresql.org/docs/9.1/datatype-xml.html">xml objects</link>
+        <span>)</span>
+      </item>
+    </list>
+    <heading level="3">Standards</heading>
+    <list>
+      <item>
+        <link target="https://xmpp.org/">XMPP</link>
+        <span> - Open communication standard</span>
+      </item>
+      <item>
+        <link target="https://openid.net/developers/how-connect-works/">OpenID</link>
+        <span> - Interoperable identity protocol for user authentication</span>
+      </item>
+    </list>
+    <heading level="3">Backend</heading>
+    <p>
+      <strong>Server Framework</strong>
+    </p>
+    <list>
+      <item>
+        <link target="https://fastapi.tiangolo.com/">FastAPI</link>
+        <span> - Type-hint driven API framework, better for modern python</span>
+      </item>
+    </list>
+    <p>
+      <strong>Database</strong>
+    </p>
+    <list>
+      <item>
+        <link target="https://www.postgresql.org/">Postgres</link>
+        <span> for relational database</span>
+        <list>
+          <item>
+            <link target="https://www.sqlalchemy.org/">SQLAlchemy</link>
+            <span> for python ORM layer</span>
+          </item>
+        </list>
+      </item>
+    </list>
+    <heading level="3">Frontend</heading>
+    <p>
+      <strong>UI Framework</strong>
+    </p>
+    <list>
+      <item>
+        <link target="https://react.dev/">React</link>
+        <span> - widely supported, but bloated OR</span>
+      </item>
+    </list>
+    <heading level="3">Development</heading>
+    <p>
+      <strong>Deployment</strong>
+    </p>
+    <list>
+      <item>
+        <link target="https://www.docker.com/">Docker</link>
+        <span> - Containers to run the application</span>
+      </item>
+      <item>
+        <link target="https://nginx.org/">Nginx</link>
+        <span> - HTTP Web server</span>
+      </item>
+      <item>
+        <link target="https://github.com/emmett-framework/granian">Granian</link>
+        <span> - Rust + Python HTTP server</span>
+      </item>
+    </list>
+    <p>
+      <strong>Development Tools</strong>
+    </p>
+    <list>
+      <item>
+        <link target="https://penpot.app/">penpot</link>
+        <span> - UI design platform (open source, self-host)</span>
+      </item>
+      <item>
+        <link target="https://redocly.com/">redocly</link>
+        <span> - Documentation generation</span>
+      </item>
+    </list>
+    <heading level="2">Misc</heading>
+    <p>Some other useful references.</p>
+    <list>
+      <item>
+        <link target="https://openlibrary.org/about">Open Library</link>
+        <span> - Internet Archive library project</span>
+        <list>
+          <item>
+            <link target="https://openlibrary.org/developers/dumps">Data dumps</link>
+            <span> - Open library TSV files with lots of data about books</span>
+          </item>
+        </list>
+      </item>
+      <item>
+        <link target="https://12factor.net/">Twelve factor app</link>
+        <span> - Good reference of best practices in application development and deployment</span>
+      </item>
+    </list>
+    <heading level="2">Docsite</heading>
+    <list>
+      <item>Project and Overview</item>
+      <item>Models</item>
+      <item>Server (python)</item>
+      <item>App (ts)</item>
+    </list>
+  </doc>
+  <doc name="python">
+    <heading level="1">Python</heading>
+    <p>
+      <span>We use </span>
+      <link target="https://www.python.org/" tag="lang">Python</link>
+      <span> version </span>
+      <link target="https://docs.python.org/release/3.13.14/" tag="vers">3.13</link>
+      <span> for the </span>
+      <link target="#server" tag="use">api server</link>
+      <span> and </span>
+      <link target="#cli" tag="use">cli utility</link>
+      <span>.</span>
+    </p>
+    <heading level="2">Conventions</heading>
+    <p>These are relevant standard-library programming conventions, patterns, and practices we may use.</p>
+    <p>
+      <task status="unsorted">expand this</task>
+    </p>
+    <heading level="3">Docstrings</heading>
+    <p>
+      <span>Docstrings are special string literals defined in </span>
+      <link target="https://peps.python.org/pep-0257/" tag="pep">257</link>
+      <span>.</span>
+    </p>
+    <p>
+      <task status="unsorted">expand this</task>
+    </p>
+    <data>
+      <item key="gloss" value="python"/>
+    </data>
+  </doc>
+</docsite>
