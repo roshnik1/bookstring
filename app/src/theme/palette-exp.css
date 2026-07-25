@@ -1,0 +1,73 @@
+:root {
+    /* Realgar <https://storiedcolors.com/color/realgar/> */
+    --key: oklch(0.6773 0.1444 32.94);
+
+    --cool-a: oklch(from var(--key) l c calc(h + 114));
+    --cool-b: oklch(from var(--key) l c calc(h + 180));
+    --warm-x: oklch(from var(--key) l c calc(h - 80));
+    --warm-y: oklch(from var(--key) l c calc(5 + 70));
+
+    --splash-chroma: 0.085;
+    --splash-key: oklch(from var(--key) l calc(c + var(--splash-chroma)) h);
+    --splash-a: oklch(from var(--cool-a) l calc(c + var(--splash-chroma)) h);
+    --splash-b: oklch(from var(--cool-b) l calc(c + var(--splash-chroma)) h);
+    --splash-x: oklch(from var(--warm-x) l calc(c + var(--splash-chroma)) h);
+    --splash-y: oklch(from var(--warm-y) l calc(c + var(--splash-chroma)) h);
+
+    --dark-chroma: -0.085;
+    --dark-bright: -0.085;
+    --dark-a: var(--cool-a);
+    --dark-x: var(--warm-x);
+
+    --light-a: var(--cool-a);
+    --light-x: var(--warm-x);
+}
+
+
+.bg-color-key {
+    background-color: var(--key);
+}
+
+.bg-color-ca {
+    background-color: var(--cool-a);
+}
+
+.bg-color-cb {
+    background-color: var(--cool-b);
+}
+
+.bg-color-wx {
+    background-color: var(--warm-x);
+}
+
+.bg-color-wy {
+    background-color: var(--warm-y);
+}
+
+.bg-color-sk {
+    background-color: var(--splash-key);
+}
+
+.bg-color-sa {
+    background-color: var(--splash-a);
+}
+
+.bg-color-sb {
+    background-color: var(--splash-b);
+}
+
+.bg-color-sx {
+    background-color: var(--splash-x);
+}
+
+.bg-color-sy {
+    background-color: var(--splash-y);
+}
+
+.bg-color-da {
+    background-color: var(--dark-a);
+}
+
+.bg-color-dx {
+    background-color: var(--dark-x);
+}

@@ -1,0 +1,100 @@
+[ports]
+app = 8080
+server = 8181
+
+[models]
+schema_file = "api_models.json"
+
+[[board.stages]]
+name = "idea"
+description = """
+Tasks that aren't fully planned, things we might do or know we'll have to do at some point but
+that may just be a title and brief description.
+"""
+transitions = [
+    "planning",
+    ["scrapped", "reason"],
+]
+
+[[board.stages]]
+name = "planning"
+description = """
+Tasks that we're fleshing out in more detail and structure.
+"""
+transitions = [
+    "planned",
+    ["scrapped", "reason"],
+]
+
+[[board.stages]]
+name = "planned"
+description = """
+Tasks that have been planned but aren't an active focus.
+"""
+transitions = [
+    "queued",
+    "active",
+    ["planning", "reason"],
+    ["scrapped", "reason"],
+]
+
+[[board.stages]]
+name = "queued"
+description = """
+Tasks that are ready to be taken into development.
+"""
+transitions = [
+    "active",
+    ["planning", "reason"],
+    ["scrapped", "reason"],
+]
+
+[[board.stages]]
+name = "active"
+description = """
+Tasks receiving active work.
+"""
+transitions = [
+    "review",
+    ["planning", "reason"],
+    ["paused", "reason"],
+    ["scrapped", "reason"],
+]
+
+[[board.stages]]
+name = "paused"
+description = """
+Tasks taken out of active work.
+"""
+transitions = [
+    "active",
+    ["planning", "reason"],
+    ["scrapped", "reason"],
+]
+
+[[board.stages]]
+name = "review"
+description = """
+Tasks that may be done and are under review.
+"""
+transitions = [
+    "complete",
+    ["planning", "reason"],
+    ["active", "reason"],
+    ["queued", "reason"],
+    ["scrapped", "reason"],
+]
+
+[[board.stages]]
+name = "complete"
+description = """
+Tasks finished successfully
+"""
+transitions = []
+
+[[board.stages]]
+name = "scrapped"
+description = """
+Tasks we've decided to drop.
+"""
+transitions = []
