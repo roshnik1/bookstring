@@ -2,7 +2,7 @@
 BookString is an open-source reading progress tracker and social media site, think Goodreads crossed with Reddit.
 
 ## Technologies
-This project uses [FastAPI](https://fastapi.tiangolo.com/) on the backend and [React](https://react.dev/) on the frontend. The python environment is managed with [uv](https://react.dev/) and the typescript project is managed with [deno](https://deno.com/).
+This project uses [FastAPI](https://fastapi.tiangolo.com/) on the backend and [React](https://react.dev/) on the frontend. The python environment is managed with [uv](https://docs.astral.sh/uv/) and the typescript project is managed with [deno](https://deno.com/).
 
 ## Development
 There is a lightweight [typer](https://typer.tiangolo.com/) CLI application for development use,
