@@ -17,3 +17,5 @@ uv run ./cli server start
 ```bash
 uv run ./cli app start
 ```
+
+**Test**
